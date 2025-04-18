@@ -11,8 +11,9 @@ const {
   ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
   McpError,
-  ReadResourceRequestSchema,
 } = require("@modelcontextprotocol/sdk/types.js");
+const puppeteer = require('puppeteer');
+const { MICRO_APP_DOCS, DOC_TYPES, DOC_SELECTORS } = require('./config/docs.js');
 
 /**
  * MicroApp MCP服务器实现
@@ -41,186 +42,242 @@ class MicroAppMcpServer {
       process.exit(0);
     });
 
-    // 初始化资源和工具
-    this.setupResourceHandlers();
+    // 初始化工具处理器
     this.setupToolHandlers();
   }
 
   /**
-   * 设置资源处理器
+   * 内容清理和格式化
    */
-  setupResourceHandlers() {
-    // 列出静态资源
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-      resources: [
-        {
-          uri: "microapp://greeting",
-          name: "问候信息",
-          mimeType: "text/plain",
-          description: "返回一个简单的问候信息",
-        },
-      ],
-    }));
+  cleanAndFormatContent(content) {
+    return content
+      .replace(/\s+/g, ' ')
+      .replace(/[\n\r]+/g, '\n')
+      .trim();
+  }
 
-    // 列出资源模板
-    this.server.setRequestHandler(
-      ListResourceTemplatesRequestSchema,
-      async () => ({
-        resourceTemplates: [
-          {
-            uriTemplate: "microapp://echo/{message}",
-            name: "回显消息",
-            mimeType: "text/plain",
-            description: "回显提供的消息",
-          },
-        ],
-      })
-    );
+  /**
+   * 验证文档抓取参数
+   */
+  validateCrawlDocsArgs(args) {
+    const docType = args?.docType || 'all';
+    
+    if (!DOC_TYPES.includes(docType)) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `无效的文档类型: ${docType}。有效类型: ${DOC_TYPES.join(', ')}`
+      );
+    }
+    
+    return { docType };
+  }
 
-    // 读取资源
-    this.server.setRequestHandler(
-      ReadResourceRequestSchema,
-      async (request) => {
-        const { uri } = request.params;
+  /**
+   * 验证API搜索参数
+   */
+  validateSearchAPIArgs(args) {
+    if (!args?.query || typeof args.query !== 'string') {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        '搜索查询参数必须是非空字符串'
+      );
+    }
+    
+    return { query: args.query };
+  }
 
-        // 处理静态资源
-        if (uri === "microapp://greeting") {
-          return {
-            contents: [
-              {
-                uri,
-                mimeType: "text/plain",
-                text: "你好，这是MicroApp MCP服务器！",
-              },
-            ],
-          };
+  /**
+   * 提取 Micro-app 相关内容
+   */
+  async extractMicroAppContent(page) {
+    let content = '';
+    
+    for (const selector of DOC_SELECTORS) {
+      try {
+        const element = await page.$(selector);
+        if (element) {
+          const elementContent = await page.evaluate(el => el.textContent, element);
+          if (elementContent) {
+            content += elementContent + '\n\n';
+          }
         }
-
-        // 处理动态资源模板
-        const echoMatch = uri.match(/^microapp:\/\/echo\/(.+)$/);
-        if (echoMatch) {
-          const message = decodeURIComponent(echoMatch[1]);
-          return {
-            contents: [
-              {
-                uri,
-                mimeType: "text/plain",
-                text: `回显: ${message}`,
-              },
-            ],
-          };
-        }
-
-        throw new McpError(ErrorCode.InvalidRequest, `未知的资源URI: ${uri}`);
+      } catch (e) {
+        continue;
       }
-    );
+    }
+
+    return this.cleanAndFormatContent(content);
+  }
+
+  /**
+   * 抓取 Micro-app 文档内容
+   */
+  async crawlMicroAppDocs(args) {
+    const { docType } = this.validateCrawlDocsArgs(args);
+    let urlsToProcess = [];
+    
+    // 获取所有文档
+    if (docType === 'all') {
+      Object.values(MICRO_APP_DOCS).forEach(category => {
+        urlsToProcess.push(...category);
+      });
+    } else {
+      // 获取该类型下的文档
+      urlsToProcess = MICRO_APP_DOCS[docType] || [];
+      
+      // 添加所有 type 为 common 的文档
+      Object.values(MICRO_APP_DOCS).forEach(category => {
+        category.forEach(doc => {
+          if (doc.type === 'common' && !urlsToProcess.some(d => d.url === doc.url)) {
+            urlsToProcess.push(doc);
+          }
+        });
+      });
+    }
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const results = [];
+    
+    console.error('urlsToProcess', urlsToProcess);
+
+    try {
+      for (const source of urlsToProcess) {
+        const page = await browser.newPage();
+        await page.goto(source.url, { 
+          waitUntil: 'networkidle0',
+          timeout: 60000 
+        });
+        
+        const content = await this.extractMicroAppContent(page);
+        results.push({
+          name: source.name,
+          url: source.url,
+          content: content
+        });
+
+        await page.close();
+      }
+    } finally {
+      await browser.close();
+    }
+
+    return {
+      content: [{
+        type: 'text',
+        text: results.map(r => `=== ${r.name} ===\nSource: ${r.url}\n\n${r.content}\n\n`).join('\n')
+      }]
+    };
   }
 
   /**
    * 设置工具处理器
    */
   setupToolHandlers() {
-    // 列出可用工具
+    // 注册工具列表
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
-          name: "get_current_time",
-          description: "获取当前时间",
+          name: 'crawl_micro_app_docs',
+          description: '抓取 Micro-app 相关文档内容',
           inputSchema: {
-            type: "object",
+            type: 'object',
             properties: {
-              format: {
-                type: "string",
-                description: "时间格式 (可选，默认为ISO)",
-                enum: ["iso", "locale", "unix"],
-              },
-            },
-          },
+              docType: {
+                type: 'string',
+                enum: ['guide', 'frameworks', 'api', 'others', 'all'],
+                description: '要抓取的文档类型'
+              }
+            }
+          }
         },
         {
-          name: "calculate",
-          description: "执行简单的数学计算",
+          name: 'get_related_links',
+          description: '获取与指定内容相关的链接',
           inputSchema: {
-            type: "object",
+            type: 'object',
             properties: {
-              expression: {
-                type: "string",
-                description: "要计算的数学表达式",
+              content: {
+                type: 'string',
+                description: '要查找相关链接的内容'
               },
+              maxResults: {
+                type: 'number',
+                description: '最大返回结果数量',
+                default: 5
+              }
             },
-            required: ["expression"],
-          },
-        },
-      ],
+            required: ['content']
+          }
+        }
+      ]
     }));
 
-    // 处理工具调用
+    // 工具调用处理
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+      const toolName = request.params.name;
+      const args = request.params.arguments;
 
-      // 获取当前时间工具
-      if (name === "get_current_time") {
-        const format = args?.format || "iso";
-        let timeString;
-
-        switch (format) {
-          case "iso":
-            timeString = new Date().toISOString();
-            break;
-          case "locale":
-            timeString = new Date().toLocaleString();
-            break;
-          case "unix":
-            timeString = Math.floor(Date.now() / 1000).toString();
-            break;
-          default:
-            timeString = new Date().toISOString();
+      try {
+        if (toolName === 'crawl_micro_app_docs') {
+          return await this.crawlMicroAppDocs(args);
+        } else if (toolName === 'get_related_links') {
+          return await this.getRelatedLinks(args);
+        } else {
+          throw new McpError(ErrorCode.MethodNotFound, `未知工具: ${toolName}`);
         }
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: timeString,
-            },
-          ],
-        };
+      } catch (error) {
+        console.error(`工具调用错误 ${toolName}:`, error);
+        if (error instanceof McpError) {
+          throw error;
+        }
+        throw new McpError(ErrorCode.InternalError, `工具执行错误 ${toolName}: ${error.message}`);
       }
-
-      // 计算工具
-      if (name === "calculate") {
-        if (!args?.expression) {
-          throw new McpError(ErrorCode.InvalidParams, "缺少表达式参数");
-        }
-
-        try {
-          // 注意：eval可能有安全风险，这里仅作为示例
-          // 实际应用中应使用更安全的方法如math.js库
-          const result = eval(args.expression);
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: `计算结果: ${result}`,
-              },
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `计算错误: ${error.message}`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-
-      throw new McpError(ErrorCode.MethodNotFound, `未知的工具: ${name}`);
     });
+  }
+
+  /**
+   * 获取相关内容链接
+   * @param {Object} args - 工具参数
+   * @returns {Promise<Object>} - 相关链接列表
+   */
+  async getRelatedLinks(args) {
+    const { content, maxResults = 5 } = args;
+    
+    if (!content) {
+      throw new McpError(ErrorCode.InvalidParams, '内容不能为空');
+    }
+
+    // 从所有文档中查找相关内容
+    const allDocs = [
+      ...MICRO_APP_DOCS.guide,
+      ...MICRO_APP_DOCS.features,
+      ...MICRO_APP_DOCS.frameworks,
+      ...MICRO_APP_DOCS.api,
+      ...MICRO_APP_DOCS.others
+    ];
+
+    // 根据内容关键词匹配相关文档
+    const contentLower = content.toLowerCase();
+    const relatedLinks = allDocs
+      .filter(doc => {
+        // 检查文档名称和类型是否包含关键词
+        return doc.name.toLowerCase().includes(contentLower) || 
+               doc.type.toLowerCase().includes(contentLower);
+      })
+      .map(doc => ({
+        title: doc.name,
+        url: doc.url,
+        description: `${doc.type} - ${doc.name}`,
+        type: doc.type
+      }))
+      .slice(0, maxResults);
+
+    return {
+      links: relatedLinks
+    };
   }
 
   /**
@@ -229,10 +286,13 @@ class MicroAppMcpServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("MicroApp MCP服务器已启动，运行在stdio上");
+    console.error('MicroApp MCP服务器已启动，运行在stdio上');
   }
 }
 
 // 创建并启动服务器
 const server = new MicroAppMcpServer();
-server.run().catch(console.error);
+server.run().catch((error) => {
+  console.error('严重错误:', error);
+  process.exit(1);
+});
