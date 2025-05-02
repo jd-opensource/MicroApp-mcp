@@ -1,14 +1,63 @@
-# MicroApp-mcp
+# @micro-zoe/micro-mcp
 
-MicroApp-mcp 是一个简单的Node.js MCP（Model Context Protocol）服务器。
+@micro-zoe/micro-mcp 是一个基于 Model Context Protocol (MCP) 的服务器，专为 micro-app 集成而设计。
 
 ## 项目描述
 
-这个项目是一个基于Model Context Protocol的微型应用服务器。它使用Node.js实现，旨在提供一个轻量级的MCP服务器框架。
+这个项目提供了一个 MCP 服务器实现，用于支持 micro-app 的集成和文档抓取功能。它使用 Node.js 实现，旨在提供一个轻量级且功能强大的 MCP 服务器框架。
+
+## 特性
+
+- 支持抓取 Micro-app 相关文档内容
+- 提供获取相关链接的功能
+- 基于 Model Context Protocol 的服务器实现
 
 ## 安装
 
-要安装此项目，请按照以下步骤操作：
+要安装此包，请运行以下命令：
+
+```
+npm install @micro-zoe/micro-mcp
+```
+
+## 使用方法
+
+1. 在你的项目中引入 @micro-zoe/micro-mcp：
+
+```javascript
+const MicroAppMcpServer = require('@micro-zoe/micro-mcp');
+```
+
+2. 创建并启动服务器：
+
+```javascript
+const server = new MicroAppMcpServer();
+server.run().catch((error) => {
+  console.error('严重错误:', error);
+  process.exit(1);
+});
+```
+
+## API
+
+### crawl_micro_app_docs
+
+抓取 Micro-app 相关文档内容。
+
+参数：
+- docType: 要抓取的文档类型（'guide'、'frameworks'、'api'、'others'、'all'）
+
+### get_related_links
+
+获取与指定内容相关的链接。
+
+参数：
+- content: 要查找相关链接的内容
+- maxResults: 最大返回结果数量（默认为 5）
+
+## 开发
+
+如果你想为这个项目做贡献，请按照以下步骤操作：
 
 1. 克隆此仓库到本地机器
 2. 进入项目目录
@@ -18,39 +67,25 @@ MicroApp-mcp 是一个简单的Node.js MCP（Model Context Protocol）服务器�
 npm install
 ```
 
-## 使用方法
-
-要启动服务器，请运行以下命令：
-
-```
-npm start
-```
-
-这将执行 `node index.js` 命令来启动服务器。
+4. 进行你的修改
+5. 运行测试（如果有的话）
+6. 提交 Pull Request
 
 ## 构建
 
-如果需要使index.js文件可执行，可以运行以下命令：
+要构建项目，请运行：
 
 ```
 npm run build
 ```
 
-这将为index.js文件添加执行权限。
-
-## 依赖
-
-本项目使用了以下主要依赖：
-
-- @modelcontextprotocol/sdk: ^0.1.0
-
 ## 许可证
 
-本项目采用 ISC 许可证。
+本项目采用 MIT 许可证。
 
 ## 关键词
 
-mcp, model-context-protocol, joycoder, microapp
+mcp, model-context-protocol, micro-app, micro-frontend
 
 ## 版本
 

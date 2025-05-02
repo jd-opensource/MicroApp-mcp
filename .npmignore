@@ -1,0 +1,79 @@
+# Source files
+src/
+
+# Test files
+test/
+__tests__/
+*.spec.js
+*.test.js
+
+# Configuration files
+.eslintrc
+.prettierrc
+tsconfig.json
+jest.config.js
+
+# Build scripts
+build.js
+
+# Documentation
+docs/
+
+# Git related
+.git/
+.gitignore
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+.github/
+
+# Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+.tmp/
+.temp/
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# dotenv environment variables file
+.env
+.env.test
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn
+yarn.lock
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+.joycoder

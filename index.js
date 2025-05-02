@@ -22,7 +22,7 @@ class MicroAppMcpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "MicroApp-mcp",
+        name: "@micro-zoe/micro-mcp",
         version: "0.1.0",
       },
       {
@@ -286,7 +286,7 @@ class MicroAppMcpServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('MicroApp MCP服务器已启动，运行在stdio上');
+    console.error('@micro-zoe/micro-mcp 服务器已启动，运行在IDE上');
   }
 }
 

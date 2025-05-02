@@ -1,21 +1,26 @@
 {
-  "name": "MicroApp-mcp",
+  "name": "@micro-zoe/micro-mcp",
   "version": "0.1.0",
-  "description": "一个简单的Node.js MCP服务器",
+  "description": "MCP server for micro-app integration",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node index.js",
-    "build": "node build.js"
+    "build": "node build.js",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
-    "joycoder",
-    "microapp"
+    "micro-app",
+    "micro-frontend"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Micro-Zoe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/micro-zoe/micro-mcp.git"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
     "puppeteer": "^23.4.0"
@@ -24,5 +29,8 @@
     "esbuild": "^0.25.2",
     "jest": "^29.7.0",
     "pkg": "^5.8.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
