@@ -2,11 +2,14 @@
   "name": "@micro-zoe/micro-mcp",
   "version": "0.1.0",
   "description": "MCP server for micro-app integration",
-  "main": "index.js",
-  "type": "commonjs",
+  "main": "build/index.js",
+  "type": "module",
+  "bin": {
+    "weather": "./build/index.js"
+  },
   "scripts": {
-    "start": "node index.js",
-    "build": "node build.js",
+    "start": "node build/index.js",
+    "build": "npx tsc && chmod 755 build/index.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -26,10 +29,13 @@
     "puppeteer": "^23.4.0"
   },
   "devDependencies": {
-    "esbuild": "^0.25.2",
-    "jest": "^29.7.0",
-    "pkg": "^5.8.1"
+    "@types/node": "^20.0.0",
+    "@types/puppeteer": "^7.0.4",
+    "typescript": "^5.8.3"
   },
+  "files": [
+    "build"
+  ],
   "publishConfig": {
     "access": "public"
   }
