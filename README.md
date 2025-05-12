@@ -1,6 +1,6 @@
-# @micro-zoe/micro-mcp
+# micro-app-mcp
 
-@micro-zoe/micro-mcp 是一个基于 Model Context Protocol (MCP) 的服务器，专为 micro-app 集成而设计。
+micro-app-mcp 是一个基于 Model Context Protocol (MCP) 的服务器，专为 micro-app 集成而设计。
 
 ## 项目描述
 
@@ -17,15 +17,15 @@
 要安装此包，请运行以下命令：
 
 ```
-npm install @micro-zoe/micro-mcp
+npm install micro-app-mcp
 ```
 
 ## 使用方法
 
-1. 在你的项目中引入 @micro-zoe/micro-mcp：
+1. 在你的项目中引入 micro-app-mcp：
 
 ```javascript
-const MicroAppMcpServer = require('@micro-zoe/micro-mcp');
+const MicroAppMcpServer = require('micro-app-mcp');
 ```
 
 2. 创建并启动服务器：
