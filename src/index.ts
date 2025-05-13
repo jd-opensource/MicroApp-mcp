@@ -181,14 +181,20 @@ class MicroAppMcpServer {
       tools: [
         {
           name: 'crawl_micro_app_docs',
-          description: '抓取 Micro-app 相关文档内容',
+          description: '抓取 Micro-app 相关文档内容，尽量选择细分类目',
           inputSchema: {
             type: 'object',
             properties: {
               docType: {
                 type: 'string',
                 enum: ['guide', 'frameworks', 'api', 'others', 'all'],
-                description: '要抓取的文档类型'
+                description: `
+                  文档类型，可选值：
+                  1. guide: 指南(${MICRO_APP_DOCS.guide.map(doc => doc.name).join(', ')}),
+                  2. framworks: 框架(${MICRO_APP_DOCS.frameworks.map(doc => doc.name).join(', ')}),
+                  3. api: API(${MICRO_APP_DOCS.api.map(doc => doc.name).join(', ')}),
+                  4. others: 其他(${MICRO_APP_DOCS.others.map(doc => doc.name).join(', ')}),
+                `
               }
             }
           }

@@ -33,7 +33,7 @@ const MICRO_APP_DOCS: MicroAppDocs = {
     {
       name: "0.x迁移到1.0",
       url: `${DOC_BASE_URL}#/zh-cn/transfer`,
-      type: "common"
+      type: "guide"
     },
   ],
   features: [
