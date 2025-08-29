@@ -283,7 +283,7 @@ class MicroAppMcpServer {
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('micro-app-mcp 服务器已启动，运行在IDE上');
+    console.error('@micro-zoe/micro-mcp 服务器已启动，运行在IDE上');
   }
 }
 
