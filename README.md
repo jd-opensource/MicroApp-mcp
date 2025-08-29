@@ -89,4 +89,4 @@ mcp, model-context-protocol, micro-app, micro-frontend
 
 ## 版本
 
-当前版本：0.1.0
+当前版本：0.1.1

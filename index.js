@@ -22,8 +22,8 @@ class MicroAppMcpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "micro-app-mcp",
-        version: "0.1.0",
+        name: "@micro-zoe/micro-mcp",
+        version: "0.1.1",
       },
       {
         capabilities: {
