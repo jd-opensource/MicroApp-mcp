@@ -124,8 +124,8 @@ class MicroAppMcpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "micro-app-mcp",
-        version: "0.1.0",
+        name: "@micro-zoe/micro-mcp",
+        version: "0.1.1",
       },
       {
         capabilities: {
@@ -461,7 +461,7 @@ ${docs.map(r => `=== ${r.name} ===\nSource: ${r.url}\n\n${r.content}\n\n`).join(
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('micro-app-mcp 服务器已启动，运行在IDE上');
+    console.error('@micro-zoe/micro-mcp 服务器已启动，运行在IDE上');
   }
 }
 
